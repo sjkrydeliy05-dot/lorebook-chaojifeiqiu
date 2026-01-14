@@ -24,7 +24,7 @@ const FormatGuideModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                     <li>使用 <code className="bg-slate-700 px-1 rounded">---</code> 来分隔不同的条目。</li>
                     <li>每个条目的第一行是标题，以 <code className="bg-slate-700 px-1 rounded"># 标题</code> 的格式书写。</li>
                     <li>第二行是关键词，格式为 <code className="bg-slate-700 px-1 rounded">*关键词1,关键词2*</code>。多个关键词用逗号（全角或半角）隔开。</li>
-                    <li>从第三行开始，之后的所有内容都将被视为该条目的正文。</li>
+                    <li>关键词换行之后的所有内容都将被视为该条目的正文。</li>
                 </ul>
                 <p className="font-semibold text-white mb-2">示例：</p>
                 <pre className="bg-slate-900 rounded p-4 text-sm whitespace-pre-wrap overflow-x-auto">
