@@ -67,53 +67,41 @@ export const parseTextToTavoJson = (text: string): TavoData => {
     const entries: { [key: string]: TavoEntry } = {};
     let uidCounter = 0;
     
-    const districtBlocks = text.split('---').filter(s => s.trim());
+    const entryBlocks = text.split('---').filter(s => s.trim());
 
-    for (const block of districtBlocks) {
-        // Use a regex to split the block into the district part and the location parts
-        const locationSplitter = /\n(?=###\s+)/;
-        const parts = block.trim().split(locationSplitter);
-
-        const districtInfo = parts[0];
-        if (!districtInfo) continue;
-        
-        const districtLines = districtInfo.trim().split('\n');
-        const districtHeaderLine = districtLines.find(l => l.startsWith('## '));
-        if (!districtHeaderLine) continue;
-        
-        // Extract district name, stopping at the first parenthesis or space
-        const districtHeaderMatch = districtHeaderLine.match(/^##\s+([^(\s]+)/);
-        if (!districtHeaderMatch) continue;
-        const districtName = districtHeaderMatch[1].trim();
-        
-        // Create the main district entry
-        const districtContent = districtInfo.trim();
-        const mainTavoEntry = createDefaultEntry(uidCounter, districtName, districtContent, [districtName], true);
-        entries[mainTavoEntry.uid.toString()] = mainTavoEntry;
-        uidCounter++;
-
-        // Process location sub-entries if they exist
-        if (parts.length > 1) {
-            const locationInfos = parts.slice(1);
-            for (const locationInfo of locationInfos) {
-                const locationContent = locationInfo.trim();
-                const locationLines = locationContent.split('\n');
-                const locationHeaderLine = locationLines[0];
-                
-                const locationHeaderMatch = locationHeaderLine.match(/^###\s+(.+)/);
-                if (!locationHeaderMatch) continue;
-                const locationName = locationHeaderMatch[1].trim();
-                
-                const subTavoEntry = createDefaultEntry(uidCounter, locationName, locationContent, [locationName, districtName], false);
-                entries[subTavoEntry.uid.toString()] = subTavoEntry;
-                uidCounter++;
-            }
+    for (const block of entryBlocks) {
+        const lines = block.trim().split('\n').filter(l => l.trim());
+        if (lines.length < 3) {
+            // An entry needs at least a title, keys, and one line of content.
+            continue;
         }
+
+        const titleLine = lines[0];
+        const keysLine = lines[1];
+        const contentLines = lines.slice(2);
+
+        const titleMatch = titleLine.match(/^#\s*(.+)/);
+        if (!titleMatch) continue;
+        const comment = titleMatch[1].trim();
+
+        const keysMatch = keysLine.match(/^\*(.+)\*$/);
+        if (!keysMatch) continue;
+        
+        // Split by both half-width and full-width commas
+        const keys = keysMatch[1].split(/,|，/).map(k => k.trim()).filter(Boolean);
+        if (keys.length === 0) continue;
+
+        const content = contentLines.join('\n').trim();
+        if (!content) continue;
+        
+        const tavoEntry = createDefaultEntry(uidCounter, comment, content, keys, false);
+        entries[tavoEntry.uid.toString()] = tavoEntry;
+        uidCounter++;
     }
 
 
     if (Object.keys(entries).length === 0) {
-        throw new Error("解析失败。请确保格式正确，以 `---` 分割区域，以 `##` 定义区域标题，以 `###` 定义地点。");
+        throw new Error("解析失败。请确保格式正确：以 `---` 分割条目，每个条目以 `# 标题` 开始，下一行为 `*关键词*`。");
     }
 
     return { entries };

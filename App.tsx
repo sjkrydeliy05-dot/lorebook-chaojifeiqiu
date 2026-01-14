@@ -21,27 +21,24 @@ const FormatGuideModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                 <h2 id="format-guide-title" className="text-2xl font-bold text-white mb-4">输入格式指南</h2>
                 <p className="mb-4">为确保正确解析，请按以下格式输入您的文本：</p>
                 <ul className="list-disc list-inside mb-4 space-y-2">
-                    <li>使用 <code className="bg-slate-700 px-1 rounded">---</code> 分隔大板块（eg：英国区域文本---美国区域文本）。</li>
-                    <li>每个大板块的标题以 <code className="bg-slate-700 px-1 rounded">## 大板块名称</code> 做母标题。用来制作大板块概述，规则等（eg：## 英国）。</li>
-                    <li>使用 <code className="bg-slate-700 px-1 rounded">### 小板块名称</code> 做子标题。用于做子条目（eg：### 伦敦）。</li>
+                    <li>使用 <code className="bg-slate-700 px-1 rounded">---</code> 来分隔不同的条目。</li>
+                    <li>每个条目的第一行是标题，以 <code className="bg-slate-700 px-1 rounded"># 标题</code> 的格式书写。</li>
+                    <li>第二行是关键词，格式为 <code className="bg-slate-700 px-1 rounded">*关键词1,关键词2*</code>。多个关键词用逗号（全角或半角）隔开。</li>
+                    <li>从第三行开始，之后的所有内容都将被视为该条目的正文。</li>
                 </ul>
                 <p className="font-semibold text-white mb-2">示例：</p>
                 <pre className="bg-slate-900 rounded p-4 text-sm whitespace-pre-wrap overflow-x-auto">
-                    {`## 中国
-*概述：...
-*气候：...
-*索引：
-- 北京
-- ...
-
-### 北京
-*位置：...
-*描述：...
-**交通：...
-
-### 上海
-*位置：...
-*描述：...`}
+                    {`---
+#临江大学图书馆
+*临江大学图书馆,图书馆,擎光区*
+*位置：高校集群 - [翰林社区]。
+*描述：大学城内的核心知识殿堂，藏书丰富，是学生学习和研究的主要场所。
+---
+#理工大科创楼
+*理工大科创楼,科创楼,擎光区*
+*位置：高校集群 - [启迪社区]。
+*描述：集结了全校最顶尖的实验室和科研团队，安保严密，代表着城市科技的最前沿。
+`}
                 </pre>
             </div>
             <div className="flex-shrink-0 border-t border-slate-700 p-4 flex justify-between items-center">
