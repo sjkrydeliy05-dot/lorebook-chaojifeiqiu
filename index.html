@@ -4,12 +4,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tavo 世界书转换器</title>
+    <title>世界熔炉：JSON世界书工坊</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       body {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+      }
+      /* Hide number input arrows */
+      input[type=number]::-webkit-inner-spin-button, 
+      input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+      }
+      input[type=number] {
+        -moz-appearance: textfield; /* Firefox */
       }
     </style>
   <script type="importmap">
