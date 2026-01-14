@@ -28,18 +28,22 @@ const FormatGuideModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                     <li>第二行是主关键词，格式为 <code className="bg-slate-700 px-1 rounded">*关键词1,关键词2*</code>。</li>
                      <li>第三行是次级关键词，格式为 <code className="bg-slate-700 px-1 rounded">**关键词A,关键词B**</code>。</li>
                     <li>之后的所有内容都将被视为该条目的正文。</li>
+                    <li>注意：1. 激活方式为常驻则不需要写关键词，直接写内容即可。2. 内容不要以 <code className="bg-slate-700 px-1 rounded">*</code> 开头，会混淆。</li>
                 </ul>
                 <p className="font-semibold text-white mb-2">示例：</p>
                 <pre className="bg-slate-900 rounded p-4 text-sm whitespace-pre-wrap overflow-x-auto">
                     {`---
-#临江大学图书馆/c上
+#临江市/c上
+- 描述：繁华都市。
+---
+#临江大学图书馆/c下
 *临江大学图书馆,图书馆*
-*位置：高校集群。
+- 位置：高校集群。
 ---
 #理工大科创楼/da5
 *科创楼*
 **实验室,科研团队**
-*描述：安保严密。
+- 描述：安保严密。
 `}
                 </pre>
             </div>
