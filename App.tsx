@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { parseTextToTavoJson, createDefaultEntry } from './services/parser';
 import { TavoData, TavoEntry } from './types';
-import { DownloadIcon, LoaderIcon, ConvertIcon, InfoIcon, AddIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, ArrowsUpDownIcon } from './components/Icons';
+import { DownloadIcon, LoaderIcon, ConvertIcon, InfoIcon, AddIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, ArrowsUpDownIcon, UploadIcon } from './components/Icons';
 import { EntryCard } from './components/EntryCard';
 import { SOURCE_TEXT } from './constants';
-import { POSITION_STRING_TO_INT } from './services/mapper';
+import { POSITION_STRING_TO_INT, POSITION_INT_TO_STRING } from './services/mapper';
 
 const FormatGuideModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
     <div 
@@ -28,22 +28,18 @@ const FormatGuideModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
                     <li>第二行是主关键词，格式为 <code className="bg-slate-700 px-1 rounded">*关键词1,关键词2*</code>。</li>
                      <li>第三行是次级关键词，格式为 <code className="bg-slate-700 px-1 rounded">**关键词A,关键词B**</code>。</li>
                     <li>之后的所有内容都将被视为该条目的正文。</li>
-                    <li>注意：1. 激活方式为常驻则不需要写关键词，直接写内容即可。2. 内容不要以 <code className="bg-slate-700 px-1 rounded">*</code> 开头，会混淆。</li>
                 </ul>
                 <p className="font-semibold text-white mb-2">示例：</p>
                 <pre className="bg-slate-900 rounded p-4 text-sm whitespace-pre-wrap overflow-x-auto">
                     {`---
-#临江市/c上
-- 描述：繁华都市。
----
-#临江大学图书馆/c下
+#临江大学图书馆/c上
 *临江大学图书馆,图书馆*
-- 位置：高校集群。
+*位置：高校集群。
 ---
 #理工大科创楼/da5
 *科创楼*
 **实验室,科研团队**
-- 描述：安保严密。
+*描述：安保严密。
 `}
                 </pre>
             </div>
@@ -72,6 +68,7 @@ const App: React.FC = () => {
   const [expandedUids, setExpandedUids] = useState<Set<number>>(new Set());
   const [isEditorFullScreen, setIsEditorFullScreen] = useState(false);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleConvert = useCallback(() => {
     setIsLoading(true);
@@ -161,6 +158,74 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   }, [entries]);
 
+  const handleImportJson = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+        return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setEntries([]);
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+        try {
+            const text = e.target?.result as string;
+            const data = JSON.parse(text);
+
+            if (typeof data !== 'object' || data === null || !data.entries || typeof data.entries !== 'object') {
+                throw new Error('无效的JSON格式：缺少 "entries" 对象。');
+            }
+            
+            const defaultEntryTemplate = createDefaultEntry(0, '', '', []);
+
+            const importedEntries: TavoEntry[] = Object.values(data.entries).map((entry: any) => {
+                const positionString = POSITION_INT_TO_STRING[entry.position as number] ?? 'before_char';
+                return {
+                    ...defaultEntryTemplate,
+                    ...entry,
+                    position: positionString,
+                };
+            });
+
+            if (importedEntries.length === 0) {
+                 setEntries([]);
+            } else {
+                const sortedEntries = importedEntries.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+                setEntries(sortedEntries);
+            }
+
+            setInputText('');
+            setSortOrder('asc');
+            setExpandedUids(new Set());
+        } catch (err) {
+            setError(err instanceof Error ? err.message : '解析JSON文件时出错。');
+            setEntries([]);
+        } finally {
+            setIsLoading(false);
+            if (event.target) {
+                event.target.value = '';
+            }
+        }
+    };
+
+    reader.onerror = () => {
+        setError('读取文件时出错。');
+        setIsLoading(false);
+        if (event.target) {
+            event.target.value = '';
+        }
+    };
+
+    reader.readAsText(file);
+  }, []);
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   const toggleExpand = useCallback((uid: number) => {
     setExpandedUids(prev => {
         const newSet = new Set(prev);
@@ -218,7 +283,7 @@ const App: React.FC = () => {
                 />
             ))
           ) : (
-            <div className="flex items-center justify-center h-full pt-16"><p className="text-slate-500">转换或新增条目以开始编辑...</p></div>
+            <div className="flex items-center justify-center h-full pt-16"><p className="text-slate-500">导入、转换或新增条目以开始编辑...</p></div>
           )}
       </div>
     </div>
@@ -261,9 +326,21 @@ const App: React.FC = () => {
           
           {!isEditorFullScreen && (
             <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4 flex-shrink-0">
+               <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImportJson}
+                    accept=".json"
+                    className="hidden"
+                    aria-label="导入JSON文件"
+                />
+               <button onClick={triggerFileUpload} disabled={isLoading} className="w-full sm:w-auto flex items-center justify-center px-8 py-3 bg-sky-600 text-white font-semibold rounded-lg shadow-md hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105">
+                <UploadIcon className="w-5 h-5 mr-2" />
+                导入 JSON
+              </button>
               <button onClick={handleConvert} disabled={isLoading} className="w-full sm:w-auto flex items-center justify-center px-8 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105">
-                {isLoading ? <LoaderIcon className="w-5 h-5 mr-2 animate-spin" /> : <ConvertIcon className="w-5 h-5 mr-2" />}
-                {isLoading ? '转换中...' : '转换文本'}
+                {isLoading && !entries.length ? <LoaderIcon className="w-5 h-5 mr-2 animate-spin" /> : <ConvertIcon className="w-5 h-5 mr-2" />}
+                {isLoading && !entries.length ? '转换中...' : '转换文本'}
               </button>
               <button onClick={handleDownload} disabled={entries.length === 0 || isLoading} className="w-full sm:w-auto flex items-center justify-center px-8 py-3 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 disabled:bg-teal-400 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105">
                 <DownloadIcon className="w-5 h-5 mr-2" />

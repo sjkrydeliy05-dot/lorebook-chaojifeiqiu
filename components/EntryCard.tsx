@@ -1,4 +1,3 @@
-
 import React, { memo } from 'react';
 import type { TavoEntry } from '../types';
 import { 
@@ -100,7 +99,12 @@ const ExpandedEditor: React.FC<{
                         </div>
                     </div>
                     <div className="flex-grow flex flex-col">
-                        <Label htmlFor={`content-${entry.uid}`}>内容</Label>
+                        <div className="flex justify-between items-center">
+                            <Label htmlFor={`content-${entry.uid}`}>内容</Label>
+                            <span className="text-xs text-green-400 font-mono select-none pr-1">
+                                字数: {entry.content.length}
+                            </span>
+                        </div>
                         <Textarea 
                             id={`content-${entry.uid}`}
                             value={entry.content} 
